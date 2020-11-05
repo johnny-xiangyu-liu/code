@@ -27,8 +27,7 @@ namespace {
   }
 
   MATCHER_P(EqToken, expected, "Match Token") {
-   return
-     EqToken(expected.type(), expected.content());
+   return EqToken(expected.type(), expected.content());
   }
 
   MATCHER_P(IsOkAndHolds, a_matcher, "IsOkAndHolds") {
