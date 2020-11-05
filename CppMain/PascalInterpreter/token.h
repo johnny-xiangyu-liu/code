@@ -9,6 +9,8 @@ enum class TokenType {
   kNumber,
   kOperator,
   kString,
+  kVariable,
+  kSymbol,
 };
 
 std::string ToTokenTypeString(const TokenType& type);

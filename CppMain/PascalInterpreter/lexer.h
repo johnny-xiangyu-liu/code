@@ -29,9 +29,10 @@ class Lexer {
   absl::StatusOr<std::unique_ptr<Token>> ReadString();
   absl::StatusOr<std::unique_ptr<Token>> ReadNumber();
   absl::StatusOr<std::unique_ptr<Token>> ReadOperator();
+  absl::StatusOr<std::unique_ptr<Token>> ReadVariable();
+
   const std::string program_;
   int index_;
-
 };
 
 }

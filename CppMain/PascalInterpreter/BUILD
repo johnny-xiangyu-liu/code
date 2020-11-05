@@ -21,6 +21,14 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "util",
+    hdrs = ["util.h"],
+    deps = [
+         "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_binary(
     name = "app",
     srcs = ["app.cc"],

@@ -1,15 +1,35 @@
 #include "lexer.h"
 
 #include <cctype>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <regex>
 
 #include "absl/base/macros.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/substitute.h"
 #include "token.h"
+#include "util.h"
 
 namespace xiangyuliu::parser {
 namespace {
+
+  static const auto*  kVariableRegex = new std::regex("[a-zA-Z0-9_]*");
+
+  template <typename... T>
+  void Debug(const T&...  message) {
+    int unused[] = {(std::cout << message, 0)...};
+
+    std::cout << std::endl;
+  }
+
+  bool Match(absl::string_view content, const std::regex& regex_expr) {
+    return std::regex_match(content.begin(), content.end(), regex_expr);
+  }
+
+  bool Match(char ch, const std::regex& regex_expr) {
+    return Match(absl::string_view(&ch, 1), regex_expr);
+  }
 
   bool IsNumericOperator(char ch) {
     switch(ch) {
@@ -23,6 +43,7 @@ namespace {
       return false;
     }
   }
+
 }  // namespace
 
   void Lexer::ConsumeWs(){
@@ -50,7 +71,6 @@ namespace {
   }
 
   absl::string_view Lexer::GetContent(int start) {
-    ABSL_ASSERT(start < index_);
     absl::string_view temp = program_;
     return temp.substr(start, index_ - start);
   }
@@ -69,16 +89,17 @@ namespace {
     int start = index_;
     while (CanContinue()) {
       char ch = CurrentChar();
+      if (ch == '"' && !escaped) {
+        found_ending_quote = true;
+        break;
+      }
+
       if (ch == '\\') {
         escaped = !escaped;
       } else {
         escaped = false;
       }
 
-      if (ch == '"' && !escaped) {
-        found_ending_quote = true;
-        break;
-      }
       Increment();
     }
     if (!found_ending_quote) {
@@ -115,6 +136,19 @@ namespace {
     return MakeToken(TokenType::kNumber, start);
   }
 
+  absl::StatusOr<std::unique_ptr<Token>> Lexer::ReadVariable() {
+    int start = index_;
+    Increment();
+    while(CanContinue()) {
+      char ch = CurrentChar();
+      if (!isalnum(ch) && ch != '_') {
+        break;
+      }
+      Increment();
+    }
+    return MakeToken(TokenType::kVariable, start);
+  }
+
   absl::StatusOr<std::unique_ptr<Token>> Lexer::ReadToken() {
     ConsumeWs();
     if (!CanContinue()) {
@@ -125,10 +159,11 @@ namespace {
     int start = index_;
     if (ch == '"') return ReadString();
     if (IsNumericOperator(ch)) return ReadOperator();
-    if (isdigit(ch)) return ReadNumber();
+    if (isdigit(ch) || ch == '.') return ReadNumber();
+    if (isalpha(ch) || ch == '_') return ReadVariable();
 
     if (start >= index_) {
-      return absl::FailedPreconditionError("start < index_");
+      return absl::FailedPreconditionError(absl::Substitute("start[$0] < index_[$1]", start, index_));
     }
     return nullptr;
   }

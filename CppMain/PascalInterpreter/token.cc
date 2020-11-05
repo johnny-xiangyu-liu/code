@@ -10,6 +10,8 @@ namespace xiangyuliu::parser {
       return "String";
     case TokenType::kOperator:
       return "Operator";
+    case TokenType::kVariable:
+      return "Variable";
     }
     return "failed";
   }
